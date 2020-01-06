@@ -8,6 +8,33 @@ output:
 
 ## Loading and preprocessing the data
 
+Prior to the analysis, we must first load the data and clean it.
+
+```{r message = FALSE}
+# Load the necessary packages
+library(tidyverse)
+library(magrittr)
+library(zeallot)
+
+# Load the data
+activity_data <- read_csv('activity_data.csv')
+
+# Glimpse the unprocessed data
+activity_data %>% glimpse()
+```
+
+Notice that the `date` column has already been converted into a `Datetime`
+object by the `read_csv` function. It's quite clear from the above data frame
+summary that there are `NA`s in the `step` column. We will deal with them by
+simply converting them into zeros.
+
+```{r}
+# Convert all NAs in the 'steps' column to 0
+activity_data %<>% replace_na(replace = list(steps = 0))
+
+# Glimpse the data to verify that the conversion worked
+activity_data %>% glimpse()
+```
 
 
 ## What is mean total number of steps taken per day?
