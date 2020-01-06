@@ -17,29 +17,53 @@ library(magrittr)
 library(zeallot)
 
 # Load the data
-activity_data <- read_csv('activity_data.csv')
+activity_data <- read_csv('activity.csv')
 
 # Glimpse the unprocessed data
 activity_data %>% glimpse()
 ```
 
 Notice that the `date` column has already been converted into a `Datetime`
-object by the `read_csv` function. It's quite clear from the above data frame
-summary that there are `NA`s in the `step` column. We will deal with them by
-simply converting them into zeros.
-
-```{r}
-# Convert all NAs in the 'steps' column to 0
-activity_data %<>% replace_na(replace = list(steps = 0))
-
-# Glimpse the data to verify that the conversion worked
-activity_data %>% glimpse()
-```
-
+object by the `read_csv` function, so our data preprocessing has been handled
+for us. We'll leave the `NA`s alone for now.
 
 ## What is mean total number of steps taken per day?
 
+In order to obtain this value we need to obtain the total number of steps for
+each day.
 
+```{r}
+# Get total number of steps per day
+total_steps_per_day <- activity_data %>%
+	group_by(date) %>%
+	summarize(total_steps = sum(steps))
+
+# Display the values
+total_steps_per_day
+```
+
+Note the `NA`s. We will be explicitly ignoring them in our calculation of the
+mean and median total steps taken per day. By this it is meant that the `NA`
+values will be removed from the calculation.
+
+```{r}
+# Get the mean and median total steps
+total_steps_per_day %>%
+	summarize(mean_total_steps = mean(total_steps, na.rm = T),
+			  median_total_steps = median(total_steps, na.rm = T))
+```
+
+In order to get a sense of the distribution of the total number of steps taken
+each day, we'll create a histogram.
+
+```{r message = FALSE, warning = FALSE, fig.align = 'center'}
+# Histogram of the total steps taken per day
+total_steps_per_day %>% ggplot(aes(total_steps)) +
+	geom_histogram(color = 'black', fill = 'grey') + theme_bw() +
+	labs(title = 'Histogram of the Total Number of Steps Per Day',
+		 x = 'Steps', y = 'Frequency') +
+	theme(plot.title = element_text(hjust = 0.5))
+```
 
 ## What is the average daily activity pattern?
 
