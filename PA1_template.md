@@ -47,11 +47,11 @@ total_steps_per_day <- activity_data %>%
 	summarize(total_steps = sum(steps))
 
 # Display the values
-total_steps_per_day
+total_steps_per_day %>% head(10)
 ```
 
 ```
-## # A tibble: 61 x 2
+## # A tibble: 10 x 2
 ##    date       total_steps
 ##    <date>           <dbl>
 ##  1 2012-10-01          NA
@@ -64,7 +64,6 @@ total_steps_per_day
 ##  8 2012-10-08          NA
 ##  9 2012-10-09       12811
 ## 10 2012-10-10        9900
-## # … with 51 more rows
 ```
 
 Note the `NA`s. We will be explicitly ignoring them in our calculation of the
@@ -116,7 +115,7 @@ activity_data %>% group_by(interval) %>%
 	scale_x_continuous(breaks = seq(0, 2400, 200)) +
 	theme_bw() +
 	labs(title = 'Average Number of Steps Taken Over Each 5 Minute Interval',
-		 x = 'Intervals', y = 'Average Number of Steps') +
+		 x = 'Interval (minutes)', y = 'Average Number of Steps') +
 	theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -152,19 +151,23 @@ activity_data_imputed <- activity_data %>%
     replace_na(replace = list(steps = steps_median))
 
 # Display the new dataframe with the imputed values
-activity_data_imputed %>% head()
+activity_data_imputed %>% head(10)
 ```
 
 ```
-## # A tibble: 6 x 3
-##   steps date       interval
-##   <dbl> <date>        <dbl>
-## 1     0 2012-10-01        0
-## 2     0 2012-10-01        5
-## 3     0 2012-10-01       10
-## 4     0 2012-10-01       15
-## 5     0 2012-10-01       20
-## 6     0 2012-10-01       25
+## # A tibble: 10 x 3
+##    steps date       interval
+##    <dbl> <date>        <dbl>
+##  1     0 2012-10-01        0
+##  2     0 2012-10-01        5
+##  3     0 2012-10-01       10
+##  4     0 2012-10-01       15
+##  5     0 2012-10-01       20
+##  6     0 2012-10-01       25
+##  7     0 2012-10-01       30
+##  8     0 2012-10-01       35
+##  9     0 2012-10-01       40
+## 10     0 2012-10-01       45
 ```
 
 We can see here that the `NA`s in the original dataset have been replaced with
@@ -209,3 +212,31 @@ the mean and median computation that, while the median is unaffected the mean
 decreased.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Here we'll need to compute the interval averages with the imputed data
+seperately for weekdays and weekends before plotting the values
+
+
+```r
+# Compute average steps per interval using the imputed data differentiating
+# between weekdays and weekends and plot the resulting values
+activity_data_imputed %>%
+    mutate(type_of_day = ifelse(str_detect(weekdays(date), 'S(at|un)'),
+                                'Weekend', 'Weekday')) %>%
+    group_by(type_of_day, interval) %>%
+    summarize(avg_steps = mean(steps)) %>%
+    ggplot(aes(interval, avg_steps)) +
+    geom_line(color = 'blue', size = 1) +
+    facet_wrap(~ type_of_day, ncol = 1) +
+    theme_bw() +
+    labs(title = 'Activity Comparison between Weekdays and the Weekend',
+         x = 'Interval (minutes)', y = 'Average Number of Steps') +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+<img src="PA1_template_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
+
+From the plot we can see that during weekdays there was a large spike of
+activity during the start of the activity tracking period before the average
+number of steps decreased to a lower level. During the weekend the amount of
+activity started from almost 0 before increasing to a more or less stable level.
