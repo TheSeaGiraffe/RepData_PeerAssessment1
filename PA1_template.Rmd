@@ -13,8 +13,6 @@ Prior to the analysis, we must first load the data and clean it.
 ```{r message = FALSE}
 # Load the necessary packages
 library(tidyverse)
-library(magrittr)
-library(zeallot)
 
 # Load the data
 activity_data <- read_csv('activity.csv')
@@ -39,7 +37,7 @@ total_steps_per_day <- activity_data %>%
 	summarize(total_steps = sum(steps))
 
 # Display the values
-total_steps_per_day
+total_steps_per_day %>% head()
 ```
 
 Note the `NA`s. We will be explicitly ignoring them in our calculation of the
@@ -70,12 +68,12 @@ total_steps_per_day %>% ggplot(aes(total_steps)) +
 We'll start by making a line plot of the average number of steps for each five
 minute interval.
 
-```{r}
+```{r fig.align = 'center'}
 # Plot the average number of steps for each five minute interval
 activity_data %>% group_by(interval) %>%
 	summarize(avg_steps = mean(steps, na.rm = T)) %>%
 	ggplot(aes(interval, avg_steps)) +
-	geom_line(color = 'blue', size = 2) +
+	geom_line(color = 'blue', size = 1) +
 	scale_x_continuous(breaks = seq(0, 2400, 200)) +
 	theme_bw() +
 	labs(title = 'Average Number of Steps Taken Over Each 5 Minute Interval',
@@ -88,6 +86,56 @@ steps is around 830.
 
 ## Imputing missing values
 
+Before we attempt to imput missing values, let's count just how many rows with
+missing values there are in our dataset.
 
+```{r}
+# Get the total number of missing values in the dataset
+activity_data %>% is.na() %>% sum()
+```
+
+Since this is a comparatively small number of rows and we know that the missing
+values are all in the steps column, we can employ a simple method of imputing
+missing values, namely substituting the median value of the steps column.
+
+```{r}
+# Replace missing values in steps column with median
+steps_median <- activity_data$steps %>% median(na.rm = T)
+activity_data_imputed <- activity_data %>%
+    replace_na(replace = list(steps = steps_median))
+
+# Display the new dataframe with the imputed values
+activity_data_imputed %>% head()
+```
+
+We can see here that the `NA`s in the original dataset have been replaced with
+the median of the `steps` column which happens to be 0. Let's see how these
+imputed values affect the distribution, mean, and median of the `steps` column.
+
+```{r, message = FALSE, fig.align = 'center'}
+# Create histogram of total number of steps taken per day
+total_steps_imputed <- activity_data_imputed %>%
+    group_by(date) %>%
+    summarize(total_steps = sum(steps))
+
+total_steps_imputed %>% ggplot(aes(total_steps)) +
+    geom_histogram(color = 'black', fill = 'grey') +
+    theme_bw() +
+    labs(title = 'Histogram of Total Steps Per Day with Imputed Values',
+         x = 'Steps', y = 'Frequency') +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+# Calculate the mean and median total steps
+total_steps_imputed %>%
+    summarize(mean_total_steps = mean(total_steps),
+              median_total_steps = median(total_steps))
+```
+
+We see from the plot that the imputed values create a spike on the left side
+where all of the values at or close to zero are. We also see from the results of
+the mean and median computation that, while the median is unaffected the mean
+decreased.
 
 ## Are there differences in activity patterns between weekdays and weekends?
